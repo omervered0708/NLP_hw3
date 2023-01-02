@@ -1,6 +1,16 @@
 from collections import OrderedDict
 
-def read_data(path, labeled = True):
+
+class Preprocessor:
+    def __init__(self, path):
+        self.vocab_size = 0
+        self.pos_count = 0
+
+    def preprocess(self, path, labeled=True):
+        pass
+
+
+def read_data(path, labeled=True):
     with open(path, 'r') as f:
         sentences = []
         # read all sentences as without padding
@@ -14,9 +24,9 @@ def read_data(path, labeled = True):
                 pos = line[3]
                 if labeled:
                     head = line[6]
-                    curr_sentence.append([num,token,pos,head])
+                    curr_sentence.append([num, token, pos, head])
                 else:
-                    curr_sentence.append([num,token,pos])
+                    curr_sentence.append([num, token, pos])
             else:
                 sentences.append(curr_sentence)
                 curr_sentence = []
@@ -28,17 +38,20 @@ def read_data(path, labeled = True):
 
 def get_vocab(sentences):
     tokens = OrderedDict.fromkeys([t[1] for s in sentences for t in s])
-    index2token = ["[PAD]","[UNK]"] + list(tokens)
-    token2index = {t:i for i,t in enumerate(index2token)}
-    return index2token,token2index
+    index2token = ["[PAD]", "[UNK]"] + list(tokens)
+    token2index = {t: i for i, t in enumerate(index2token)}
+    return index2token, token2index
+
 
 def get_pos_index(sentences):
     pos = OrderedDict.fromkeys([t[1] for s in sentences for t in s])
     index2pos = ["[PAD]", "[UNK]"] + list(pos)
     pos2index = {t: i for i, t in enumerate(index2pos)}
     return index2pos, pos2index
+
+
 def get_indexes(sentences):
-    index2token , token2index = get_vocab(sentences)
+    index2token, token2index = get_vocab(sentences)
     index2pos, pos2index = get_pos_index(sentences)
     for s in sentences:
         for w in s:
@@ -52,3 +65,7 @@ def get_indexes(sentences):
                 w[2] = 1
 
     return sentences
+
+
+def preprocess(path, labeled):
+    pass
