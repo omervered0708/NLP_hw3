@@ -7,7 +7,7 @@ def read_data(path, labeled = True):
         curr_sentence = []
         for line in f:
             # check if line is blank
-            split_line  = line.split('\t')
+            split_line = line.split('\t')
             if line != '\n':
                 num = split_line[0]
                 token = line[1]
@@ -32,9 +32,23 @@ def get_vocab(sentences):
     token2index = {t:i for i,t in enumerate(index2token)}
     return index2token,token2index
 
+def get_pos_index(sentences):
+    pos = OrderedDict.fromkeys([t[1] for s in sentences for t in s])
+    index2pos = ["[PAD]", "[UNK]"] + list(pos)
+    pos2index = {t: i for i, t in enumerate(index2pos)}
+    return index2pos, pos2index
 def get_indexes(sentences):
     index2token , token2index = get_vocab(sentences)
+    index2pos, pos2index = get_pos_index(sentences)
     for s in sentences:
         for w in s:
-            w[1] = token2index[w[1]]
+            if w[1] in token2index.keys():
+                w[1] = token2index[w[1]]
+            else:
+                w[1] = 1
+            if w[2] in pos2index.keys():
+                w[2] = pos2index[w[2]]
+            else:
+                w[2] = 1
+
     return sentences
