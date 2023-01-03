@@ -15,7 +15,7 @@ def main():
     preprocessor = preprocess.Preprocessor(path='./data/train.labeled')
 
     train_set = preprocessor.preprocess(path='./data/train.labeled', labeled=True)
-    test_set = preprocess.preprocess(path='./data/test.labeled', labeled=True)
+    test_set = preprocessor.preprocess(path='./data/test.labeled', labeled=True)
 
     train_loader = DataLoader(train_set, batch_size=1, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=1, shuffle=False)
@@ -23,7 +23,7 @@ def main():
     # init model
     d_word_embed = 64
     d_pos_embed = 8
-    d_hidden = 128
+    d_hidden = 64
     n_layers = 2
     dropout = 0.5
 
@@ -37,18 +37,26 @@ def main():
     weight_decay = 1e-5
     n_epochs = 8
 
-    criterion = nn.BCEWithLogitsLoss()
+    criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     # training loop
-    for epoch in tqdm(range(n_epochs), leave=False, desc='main loop'):
-        for words, pos, labels in tqdm(train_loader, leave=False, desc=f'epoch = {epoch}'):
+    for epoch in range(n_epochs):
+        for words, pos, labels in tqdm(train_loader, leave=False, desc=f'[{epoch}/{n_epochs}]'):
+
+            eye = torch.eye(len(labels[0]), dtype=torch.bool)
+            labels = labels.type(torch.LongTensor)
 
             if torch.cuda.is_available():
-                words, pos, labels = words.cuda(), pos.cuda(), labels.cuda()
+                words, pos, labels, eye = words.cuda(), pos.cuda(), labels.cuda(), eye.cuda()
 
-            outputs = model(words, pos)
+            outputs = model(words, pos).masked_fill_(eye, value=-1 * torch.inf)
+            outputs, labels = outputs[1:], labels[0][1:]
             loss = criterion(outputs, labels)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+
+
+if __name__ == '__main__':
+    main()

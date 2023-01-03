@@ -29,15 +29,23 @@ class Model(nn.Module):
             nn.Dropout(dropout),
             nn.Linear(16, 1)
         )
-        self.sigmoid = nn.Sigmoid()
+        self.softmax = nn.Softmax(dim=1)
 
     def forward(self, X, P):
+        sen_len = X.shape[1]
         if self.ignore_pos:
             out = self.word_embed(X)
         else:
             out = torch.concat((self.word_embed(X), self.pos_embed(P)), dim=-1)
-        out = self.lstm(out)
-        out = torch.stack(list(torch.concat(p, dim=-1) for p in itertools.combinations(out, r=2))
-                          + list(torch.concat(p, dim=-1) for p in itertools.combinations(reversed(out[:, 1:]), r=2)))
+        out, _ = self.lstm(out)
+        out = out[0]
+        # pairs_with_root = list(itertools.combinations(out, r=2))
+        # pairs_without_root = list(itertools.combinations(reversed(out[1:]), r=2))
+        # concat_with_root = [torch.cat(p, dim=-1) for p in pairs_with_root]
+        # concat_without_root = [torch.cat(p, dim=-1) for p in pairs_without_root]
+        # out = torch.stack(list(torch.cat(p, dim=-1) for p in itertools.combinations(out, r=2))
+        #                   + list(torch.cat(p, dim=-1) for p in itertools.combinations(reversed(out[1:]), r=2)))
+        out = torch.stack(list(torch.cat(p, dim=-1) for p in itertools.product(out, repeat=2)))
+        out = out.reshape((sen_len, sen_len, 2 * 2 * self.d_hidden))
         out = self.fc(out)
-        return self.sigmoid(out)
+        return out.squeeze() if self.training else self.softmax(out).squeeze()
