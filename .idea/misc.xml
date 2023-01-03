@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.9.15 (/home/omer.vered/anaconda3/envs/nlp_base/bin/python)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Remote Python 3.8.13 (sftp://student@nlpgpu2022w-0045.westus.cloudapp.azure.com:22/anaconda/envs/py38_default/bin/python)" project-jdk-type="Python SDK" />
 </project>
