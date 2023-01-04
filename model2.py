@@ -24,19 +24,21 @@ class Model(nn.Module):
         self.pos_embed = nn.Embedding(num_embeddings=n_pos_embed, embedding_dim=d_pos_embed)
         self.lstm = nn.LSTM(input_size=self.d_lstm_input, hidden_size=d_hidden, num_layers=n_layers, batch_first=True,
                             dropout=dropout, bidirectional=True)
-        self.fc = nn.Sequential(
-            nn.Linear(2 * 2 * d_hidden, 128),
+        self.fc_right = nn.Sequential(
+            nn.Linear(2 * d_hidden, 256),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(128, 64),
+            nn.Linear(256, 128)
+        )
+        self.fc_left = nn.Sequential(
+            nn.Linear(2 * d_hidden, 256),
             nn.ReLU(),
-            nn.Dropout(dropout / 2),
-            nn.Linear(64, 1)
+            nn.Dropout(dropout),
+            nn.Linear(256, 128)
         )
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, X, P, w2v):
-        sen_len = X.shape[1]
         if self.ignore_pos:
             out = torch.concat((self.word_embed(X), w2v), dim=-1)
         else:
@@ -44,8 +46,8 @@ class Model(nn.Module):
         out = out.type(torch.float32)
         out, _ = self.lstm(out)
         out = out[0]
-        out = torch.stack(list(torch.cat(p, dim=-1) for p in itertools.product(out, repeat=2)))
-        out = out.reshape((sen_len, sen_len, 2 * 2 * self.d_hidden))
-        out = self.fc(out)
+        left = self.fc_left(out)
+        right = self.fc_right(out)
+        out = torch.matmul(right, left.T)
         # return out.squeeze() if self.training else self.softmax(out).squeeze()
         return out.squeeze()
