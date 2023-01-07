@@ -11,11 +11,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from chu_liu_edmonds import decode_mst
-
-
-def uas(pred_dep, true_dep):
-    n = len(pred_dep)
-    return np.sum(pred_dep == true_dep) / n
+from sklearn.metrics import accuracy_score
 
 
 def epoch_loop(model, dataloader, criterion, to_train=True, optimizer=None, loop_desc='eval', sample_score=0.05,
@@ -24,7 +20,8 @@ def epoch_loop(model, dataloader, criterion, to_train=True, optimizer=None, loop
     hits = 0
     total_dep_loss = 0
     total_dep_pred = 0
-
+    true_list = []
+    pred_list = []
     loss = torch.zeros(1)
 
     for i, (words, pos, labels, w2v) in enumerate(tqdm(dataloader, leave=False, desc=loop_desc)):
@@ -48,13 +45,12 @@ def epoch_loop(model, dataloader, criterion, to_train=True, optimizer=None, loop
             optimizer.step()
             loss = torch.zeros(1)
 
-        if sample_score == 1.0 or random.random() < sample_score:
-            pred_dep, _ = decode_mst(outputs.cpu().detach().numpy().T, len(outputs), has_labels=False)
-            labels = labels[0]
-            hits += np.sum(pred_dep == labels.cpu().numpy()) - 1
-            total_dep_pred += len(labels) - 1
-
-    return total_loss / total_dep_loss, hits / total_dep_pred
+        pred_dep, _ = decode_mst(outputs.cpu().detach().numpy().T, len(outputs), has_labels=False)
+        labels = labels[0][1:]
+        pred_dep = pred_dep[1:]
+        true_list += list(labels.cpu())
+        pred_list += list(pred_dep)
+    return total_loss / total_dep_loss, accuracy_score(true_list, pred_list)
 
 
 def train_eval_epoch(model, dataloader, criterion, to_train=True, optimizer=None, loop_desc='eval', to_print=True,
@@ -124,7 +120,7 @@ def main():
 
     model = model2.Model(n_word_embed=preprocessor.vocab_size, d_word_embed=d_word_embed,
                          n_pos_embed=preprocessor.pos_count, d_pos_embed=d_pos_embed, d_hidden=d_hidden,
-                         n_layers=n_layers, dropout=dropout, ignore_pos=False)
+                         n_layers=n_layers, dropout=dropout)
     print(f'num param: {sum([param.numel() for param in model.parameters()])}')
     model.to(device)
 
