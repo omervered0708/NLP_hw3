@@ -15,7 +15,7 @@ from sklearn.metrics import accuracy_score
 
 
 def epoch_loop(model, dataloader, criterion, to_train=True, optimizer=None, loop_desc='eval', sample_score=0.05,
-               batch_size=64):
+               batch_size=64, scheduler=None):
     total_loss = 0
     hits = 0
     total_dep_loss = 0
@@ -50,14 +50,21 @@ def epoch_loop(model, dataloader, criterion, to_train=True, optimizer=None, loop
         pred_dep = pred_dep[1:]
         true_list += list(labels.cpu())
         pred_list += list(pred_dep)
-    return total_loss / total_dep_loss, accuracy_score(true_list, pred_list)
+
+    epoch_accuracy = accuracy_score(true_list, pred_list)
+
+    if scheduler is not None and to_train:
+        scheduler.step(epoch_accuracy)
+
+    return total_loss / total_dep_loss, epoch_accuracy
 
 
 def train_eval_epoch(model, dataloader, criterion, to_train=True, optimizer=None, loop_desc='eval', to_print=True,
-                     sample_score=1.0, batch_size=64):
+                     sample_score=1.0, batch_size=64, scheduler=None):
     if to_train:
         epoch_loss, epoch_uas = epoch_loop(model, dataloader, criterion, to_train=True, optimizer=optimizer,
-                                           loop_desc=loop_desc, sample_score=sample_score, batch_size=batch_size)
+                                           loop_desc=loop_desc, sample_score=sample_score, batch_size=batch_size,
+                                           scheduler=scheduler)
         if to_print:
             print(f'{loop_desc} train loss = {epoch_loss}, train uas = {epoch_uas}')
     else:
@@ -113,10 +120,10 @@ def main():
 
     # init model
     d_word_embed = 256
-    d_pos_embed = 48
+    d_pos_embed = 16
     d_hidden = 256
     n_layers = 2
-    dropout = 0.1
+    dropout = 0.2
 
     model = model2.Model(n_word_embed=preprocessor.vocab_size, d_word_embed=d_word_embed,
                          n_pos_embed=preprocessor.pos_count, d_pos_embed=d_pos_embed, d_hidden=d_hidden,
@@ -132,6 +139,7 @@ def main():
 
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', patience=8)
 
     train_uas = []
     train_loss = []
@@ -142,7 +150,8 @@ def main():
     for epoch in range(n_epochs):
         epoch_train_loss, epoch_train_uas = train_eval_epoch(model, train_loader, criterion, to_train=True,
                                                              optimizer=optimizer, loop_desc=f'[{epoch}/{n_epochs}]',
-                                                             to_print=True, sample_score=1.0, batch_size=batch_size)
+                                                             to_print=True, sample_score=1.0, batch_size=batch_size,
+                                                             scheduler=scheduler)
         train_loss.append(epoch_train_loss)
         train_uas.append(epoch_train_uas)
 

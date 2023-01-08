@@ -5,7 +5,7 @@ import itertools
 
 class Model(nn.Module):
     def __init__(self, n_word_embed, d_word_embed, n_pos_embed, d_pos_embed, d_hidden, n_layers, dropout=0.5,
-                 ignore_pos=True, d_pretrained_embed=300,use_w2v=True):
+                 ignore_pos=True, d_pretrained_embed=300, use_w2v=True):
         super().__init__()
 
         self.n_word_embed = n_word_embed
@@ -42,7 +42,7 @@ class Model(nn.Module):
     def forward(self, X, P, w2v):
         if not self.use_w2v:
             if self.ignore_pos:
-                out =self.word_embed(X)
+                out = self.word_embed(X)
             else:
                 out = torch.concat((self.word_embed(X), self.pos_embed(P)), dim=-1)
         else:
@@ -56,5 +56,4 @@ class Model(nn.Module):
         left = self.fc_left(out)
         right = self.fc_right(out)
         out = torch.matmul(right, left.T)
-        # return out.squeeze() if self.training else self.softmax(out).squeeze()
         return out.squeeze()
