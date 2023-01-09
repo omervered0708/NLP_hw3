@@ -5,6 +5,7 @@ import torch.nn as nn
 import preprocess
 import model1
 import model2
+import combined_model
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -95,25 +96,26 @@ def main():
     # set device
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
+    preprocessed_path = './big_preprocessed_data'
     # load and preprocess
-    preprocessor = preprocess.Preprocessor(path=None, dictionary=torch.load('./preprocessed_data/preprocessor.pkl'),
+    preprocessor = preprocess.Preprocessor(path=None, dictionary=torch.load(f'{preprocessed_path}/preprocessor.pkl'),
                                            load_w2v=False) \
-        if os.path.isfile(f'./preprocessed_data/train_set.pkl') else preprocess.Preprocessor(
+        if os.path.isfile(f'{preprocessed_path}/train_set.pkl') else preprocess.Preprocessor(
         path='./data/train.labeled', load_w2v=True)
-    train_set = torch.load('./preprocessed_data/train_set.pkl') \
-        if os.path.isfile('./preprocessed_data/train_set.pkl') else preprocessor.preprocess(path='./data/train.labeled',
+    train_set = torch.load(f'{preprocessed_path}/train_set.pkl') \
+        if os.path.isfile(f'{preprocessed_path}/train_set.pkl') else preprocessor.preprocess(
+        path='./data/train.labeled', labeled=True)
+    test_set = torch.load(f'{preprocessed_path}/test_set.pkl') \
+        if os.path.isfile(f'{preprocessed_path}/test_set.pkl') else preprocessor.preprocess(path='./data/test.labeled',
                                                                                             labeled=True)
-    test_set = torch.load('./preprocessed_data/test_set.pkl') \
-        if os.path.isfile('./preprocessed_data/test_set.pkl') else preprocessor.preprocess(path='./data/test.labeled',
-                                                                                           labeled=True)
 
     # save processed data
-    if not os.path.isfile(f'./preprocessed_data/preprocessor.pkl'):
-        torch.save(preprocessor.as_dict, './preprocessed_data/preprocessor.pkl')
-    if not os.path.isfile(f'./preprocessed_data/train_set.pkl'):
-        torch.save(train_set, './preprocessed_data/train_set.pkl')
-    if not os.path.isfile(f'./preprocessed_data/test_set.pkl'):
-        torch.save(test_set, './preprocessed_data/test_set.pkl')
+    if not os.path.isfile(f'{preprocessed_path}/preprocessor.pkl'):
+        torch.save(preprocessor.as_dict, f'{preprocessed_path}/preprocessor.pkl')
+    if not os.path.isfile(f'{preprocessed_path}/train_set.pkl'):
+        torch.save(train_set, f'{preprocessed_path}/train_set.pkl')
+    if not os.path.isfile(f'{preprocessed_path}/test_set.pkl'):
+        torch.save(test_set, f'{preprocessed_path}/test_set.pkl')
 
     train_loader = DataLoader(train_set, batch_size=1, shuffle=True)
     test_loader = DataLoader(test_set, batch_size=1, shuffle=False)
@@ -121,14 +123,15 @@ def main():
     # init model
     d_word_embed = 256
     d_pos_embed = 16
-    d_hidden = 256
+    d_hidden = 512
     n_layers = 2
-    dropout1 = 0.2
-    dropout2 = 0.2
+    dropout1 = 0.4
+    dropout2 = 0.1
 
     model = model2.Model(n_word_embed=preprocessor.vocab_size, d_word_embed=d_word_embed,
                          n_pos_embed=preprocessor.pos_count, d_pos_embed=d_pos_embed, d_hidden=d_hidden,
-                         n_layers=n_layers, dropout1=dropout1,dropout2 =dropout2)
+                         n_layers=n_layers, dropout1=dropout1, dropout2=dropout2, ignore_pos=False, use_w2v=True,
+                         d_pretrained_embed=preprocessor.pretrained_embed_len)
     print(f'num param: {sum([param.numel() for param in model.parameters()])}')
     model.to(device)
 

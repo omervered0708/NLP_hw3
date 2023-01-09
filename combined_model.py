@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import itertools
 
 
 class Model(nn.Module):
@@ -24,6 +23,18 @@ class Model(nn.Module):
         self.pos_embed = nn.Embedding(num_embeddings=n_pos_embed, embedding_dim=d_pos_embed)
         self.lstm = nn.LSTM(input_size=self.d_lstm_input, hidden_size=d_hidden, num_layers=n_layers, batch_first=True,
                             dropout=dropout, bidirectional=True)
+        self.fc_right = nn.Sequential(
+            nn.Linear(2 * d_hidden, 256),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(256, 128)
+        )
+        self.fc_left = nn.Sequential(
+            nn.Linear(2 * d_hidden, 256),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(256, 128)
+        )
         self.fc = nn.Sequential(
             nn.Linear(2 * 2 * d_hidden, 128),
             nn.ReLU(),
@@ -44,9 +55,12 @@ class Model(nn.Module):
         out = out.type(torch.float32)
         out, _ = self.lstm(out)
         out = out[0]
+        left = self.fc_left(out)
+        right = self.fc_right(out)
         # out = torch.stack(list(torch.cat(p, dim=-1) for p in itertools.product(out, repeat=2)))
         # out = out.reshape((sen_len, sen_len, 2 * 2 * self.d_hidden))
         out = torch.flatten(out[torch.cartesian_prod(torch.arange(sen_len), torch.arange(sen_len))], start_dim=1)
         out = self.fc(out).squeeze()
         # return out.squeeze() if self.training else self.softmax(out).squeeze()
-        return out.reshape(sen_len, -1)
+        out = out.reshape(sen_len, -1) + torch.matmul(left, right.T)
+        return out

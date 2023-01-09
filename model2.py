@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import itertools
 
 
 class Model(nn.Module):
@@ -56,5 +55,5 @@ class Model(nn.Module):
         out = out[0]
         left = self.fc_left(out)
         right = self.fc_right(out)
-        out = torch.matmul(right, left.T)
+        out = torch.matmul(left, right.T)
         return out.squeeze()
