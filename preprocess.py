@@ -59,7 +59,8 @@ class Preprocessor:
             if to_tensor:
                 new_indexed_sentences = [[torch.tensor([w[1] for w in s], dtype=torch.int),
                                           torch.tensor([w[2] for w in s], dtype=torch.int),
-                                          torch.cat([torch.tensor(w[-1]).unsqueeze(dim=0) for w in s])] for s in indexed_sentences]
+                                          torch.cat([torch.tensor(w[-1]).unsqueeze(dim=0) for w in s])]
+                                         for s in indexed_sentences]
             else:
                 new_indexed_sentences = [[[w[1] for w in s], [w[2] for w in s], [w[-1] for w in s]]
                                          for s in indexed_sentences]
@@ -90,17 +91,18 @@ class Preprocessor:
                 for rep in self.reps:
                     if token in rep['model'].index_to_key:
                         # w.append(rep['model'][token])
-                        np.concatenate((r, rep['model'][token]))
+                        r = np.concatenate((r, rep['model'][token]))
                     else:
                         if token.isnumeric():
                             # w.append(rep['model']['integer'])
-                            np.concatenate((r, rep['model']['integer']))
+                            r = np.concatenate((r, rep['model']['integer']))
                         elif token.replace('.', '', 1).isdigit():
                             # w.append(rep['model']['number'])
-                            np.concatenate((r, rep['model']['number']))
+                            r = np.concatenate((r, rep['model']['number']))
                         else:
                             # w.append(np.zeros(rep['len']))
-                            np.concatenate((r, np.zeros(rep['len'])))
+                            r = np.concatenate((r, np.zeros(rep['len'])))
+                w.append(r)
         return sentences
 
 
