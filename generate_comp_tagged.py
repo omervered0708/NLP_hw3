@@ -1,13 +1,8 @@
 import itertools
-import pandas as pd
 import torch
 import combined_model
-import model2
 import preprocess
-import train
-import numpy as np
 import os
-import torch.nn as nn
 
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
@@ -72,9 +67,9 @@ def preds_to_file(source_path, dest_path, preds):
                 f.write(labeled_line)
 
 
-def generate_tagged(source_path, dest_path, save_processed_data_as='comp_set'):
+def generate_tagged(source_path, dest_path, preprocessed_path, save_processed_data_as='comp_set',
+                    save_preprocessed=False):
     # read data
-    preprocessed_path = './big_preprocessed_data'
     if os.path.isfile(f'{preprocessed_path}/{save_processed_data_as}.pkl'):
         preprocessor = preprocess.Preprocessor(path=None, load_w2v=False,
                                                dictionary=torch.load(f'{preprocessed_path}/preprocessor.pkl'))
@@ -83,7 +78,8 @@ def generate_tagged(source_path, dest_path, save_processed_data_as='comp_set'):
         preprocessor = preprocess.Preprocessor(path=None, load_w2v=True,
                                                dictionary=torch.load(f'{preprocessed_path}/preprocessor.pkl'))
         dataset = preprocessor.preprocess(source_path, labeled=False, to_tensor=True)
-        torch.save(dataset, f'{preprocessed_path}/{save_processed_data_as}.pkl')
+        if save_preprocessed:
+            torch.save(dataset, f'{preprocessed_path}/{save_processed_data_as}.pkl')
 
     # load model
     d_word_embed = 256
@@ -107,5 +103,5 @@ def generate_tagged(source_path, dest_path, save_processed_data_as='comp_set'):
 
 
 if __name__ == '__main__':
-    generate_tagged('./data/test.labeled', './data/test_our_labels.labeled',
+    generate_tagged('./data/comp.unlabeled', './data/comp_213336753_212362024.labeled', '.',
                     save_processed_data_as='unlabeled_test_set')

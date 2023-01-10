@@ -1,12 +1,8 @@
-import random
 import os
 import torch
 import torch.nn as nn
 import preprocess
-import model1
-import model2
 import combined_model
-import numpy as np
 import matplotlib.pyplot as plt
 
 from torch.utils.data import DataLoader
