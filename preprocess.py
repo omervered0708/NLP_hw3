@@ -35,11 +35,12 @@ class Preprocessor:
             self.index2pos = dictionary['index_to_pos']
             self.vocab_size = dictionary['vocab_size']
             self.pos_count = dictionary['pos_count']
+            self.pretrained_embed_len = dictionary['pretrained_embed_len']
 
     @property
     def as_dict(self):
         return {'index_to_token': self.index2token, 'index_to_pos': self.index2pos, 'vocab_size': self.vocab_size,
-                'pos_count': self.pos_count}
+                'pos_count': self.pos_count, 'pretrained_embed_len': self.pretrained_embed_len}
 
     def preprocess(self, path, labeled=True, to_tensor=True):
         sentences = read_data(path, labeled=labeled)

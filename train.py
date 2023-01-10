@@ -125,13 +125,13 @@ def main():
     d_pos_embed = 16
     d_hidden = 512
     n_layers = 2
-    dropout1 = 0.4
-    dropout2 = 0.1
+    dropout1 = 0.55
+    dropout2 = 0.15
 
-    model = model2.Model(n_word_embed=preprocessor.vocab_size, d_word_embed=d_word_embed,
-                         n_pos_embed=preprocessor.pos_count, d_pos_embed=d_pos_embed, d_hidden=d_hidden,
-                         n_layers=n_layers, dropout1=dropout1, dropout2=dropout2, ignore_pos=False, use_w2v=True,
-                         d_pretrained_embed=preprocessor.pretrained_embed_len)
+    model = combined_model.Model(n_word_embed=preprocessor.vocab_size, d_word_embed=d_word_embed,
+                                 n_pos_embed=preprocessor.pos_count, d_pos_embed=d_pos_embed, d_hidden=d_hidden,
+                                 n_layers=n_layers, dropout1=dropout1, dropout2=dropout2, ignore_pos=False,
+                                 use_w2v=True, d_pretrained_embed=preprocessor.pretrained_embed_len)
     print(f'num param: {sum([param.numel() for param in model.parameters()])}')
     model.to(device)
 

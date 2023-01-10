@@ -3,8 +3,8 @@ import torch.nn as nn
 
 
 class Model(nn.Module):
-    def __init__(self, n_word_embed, d_word_embed, n_pos_embed, d_pos_embed, d_hidden, n_layers, dropout1=0.5,dropout2=0.5,
-                 ignore_pos=True, d_pretrained_embed=300, use_w2v=True):
+    def __init__(self, n_word_embed, d_word_embed, n_pos_embed, d_pos_embed, d_hidden, n_layers, dropout1=0.5,
+                 dropout2=0.5, ignore_pos=True, d_pretrained_embed=300, use_w2v=True):
         super().__init__()
 
         self.n_word_embed = n_word_embed
