@@ -102,12 +102,10 @@ def main():
                                            load_w2v=False) \
         if os.path.isfile(f'{preprocessed_path}/train_set.pkl') else preprocess.Preprocessor(
         path='./data/train.labeled', load_w2v=True)
-    train_set = torch.load(f'{preprocessed_path}/train_set.pkl') \
-        if os.path.isfile(f'{preprocessed_path}/train_set.pkl') else preprocessor.preprocess(
-        path='./data/train.labeled', labeled=True)
-    test_set = torch.load(f'{preprocessed_path}/test_set.pkl') \
-        if os.path.isfile(f'{preprocessed_path}/test_set.pkl') else preprocessor.preprocess(path='./data/test.labeled',
-                                                                                            labeled=True)
+    train_set = torch.load(f'{preprocessed_path}/train_set.pkl') if os.path.isfile(f'{preprocessed_path}/train_set.pkl') \
+        else preprocessor.preprocess(path='./data/train.labeled', labeled=True)
+    test_set = torch.load(f'{preprocessed_path}/test_set.pkl') if os.path.isfile(f'{preprocessed_path}/test_set.pkl') \
+        else preprocessor.preprocess(path='./data/test.labeled', labeled=True)
 
     # save processed data
     if not os.path.isfile(f'{preprocessed_path}/preprocessor.pkl'):

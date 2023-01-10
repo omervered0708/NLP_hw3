@@ -57,7 +57,8 @@ def preds_to_file(source_path, dest_path, preds):
         lines = f.readlines()
 
     # create linear ordering of labels
-    line_labels = [line_pred + ['\n'] for line_pred in preds]
+    line_labels = [[str(d) for d in line_pred[1:]] for line_pred in preds]
+    line_labels = [line_pred + ['\n'] for line_pred in line_labels]
     line_labels = [c for c in itertools.chain(*line_labels)]
 
     # write
@@ -67,16 +68,22 @@ def preds_to_file(source_path, dest_path, preds):
                 f.write('\n')
             else:
                 line_split = line.split('\t')
-                labeled_line = ''.join(line_split[:5] + [label] + line_split[6:])
+                labeled_line = '\t'.join(line_split[:5] + [label] + line_split[6:])
                 f.write(labeled_line)
 
 
-def generate_tagged(source_path, dest_path):
+def generate_tagged(source_path, dest_path, save_processed_data_as='comp_set'):
     # read data
     preprocessed_path = './big_preprocessed_data'
-    preprocessor = preprocess.Preprocessor(path=None, load_w2v=True,
-                                           dictionary=torch.load(f'{preprocessed_path}/preprocessor.pkl'))
-    dataset = preprocessor.preprocess(source_path, labeled=False, to_tensor=True)
+    if os.path.isfile(f'{preprocessed_path}/{save_processed_data_as}.pkl'):
+        preprocessor = preprocess.Preprocessor(path=None, load_w2v=False,
+                                               dictionary=torch.load(f'{preprocessed_path}/preprocessor.pkl'))
+        dataset = torch.load(f'{preprocessed_path}/{save_processed_data_as}.pkl')
+    else:
+        preprocessor = preprocess.Preprocessor(path=None, load_w2v=True,
+                                               dictionary=torch.load(f'{preprocessed_path}/preprocessor.pkl'))
+        dataset = preprocessor.preprocess(source_path, labeled=False, to_tensor=True)
+        torch.save(dataset, f'{preprocessed_path}/{save_processed_data_as}.pkl')
 
     # load model
     d_word_embed = 256
@@ -100,4 +107,5 @@ def generate_tagged(source_path, dest_path):
 
 
 if __name__ == '__main__':
-    generate_tagged('./data/comp.unlabeled', './data/comp_213336753_212362024.labeled')
+    generate_tagged('./data/test.labeled', './data/test_our_labels.labeled',
+                    save_processed_data_as='unlabeled_test_set')
